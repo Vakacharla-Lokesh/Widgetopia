@@ -54,11 +54,14 @@ export default function TodoList({ widgetId }: TodoListProps) {
         <Input
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && addTodo()}
+          onKeyDown={(e) => e.key === "Enter" && addTodo()}
           placeholder="Add a new task..."
           className="flex-grow"
         />
-        <Button onClick={addTodo} size="icon">
+        <Button
+          onClick={addTodo}
+          size="icon"
+        >
           <Plus className="h-4 w-4" />
         </Button>
       </div>

@@ -12,9 +12,15 @@ interface DoodleProps {
 export default function Doodle({ widgetId }: DoodleProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [color, setColor] = useLocalStorage(`doodle-color-${widgetId}`, "#000000");
+  const [color, setColor] = useLocalStorage(
+    `doodle-color-${widgetId}`,
+    "#000000"
+  );
   const [isErasing, setIsErasing] = useState(false);
-  const [savedDrawing, setSavedDrawing] = useLocalStorage(`doodle-widget-${widgetId}`, "");
+  const [savedDrawing, setSavedDrawing] = useLocalStorage(
+    `doodle-widget-${widgetId}`,
+    ""
+  );
 
   const getContext = () => canvasRef.current?.getContext("2d");
 
@@ -23,10 +29,10 @@ export default function Doodle({ widgetId }: DoodleProps) {
     if (!canvas) return;
     const ctx = getContext();
     if (!ctx) return;
-    
+
     // Set canvas dimensions based on parent size
     const parent = canvas.parentElement;
-    if(parent) {
+    if (parent) {
       canvas.width = parent.clientWidth;
       canvas.height = parent.clientHeight;
     }
@@ -74,8 +80,12 @@ export default function Doodle({ widgetId }: DoodleProps) {
       const rect = canvas.getBoundingClientRect();
       const touch = e instanceof TouchEvent ? e.touches[0] : null;
       return {
-        x: touch ? touch.clientX - rect.left : (e as MouseEvent).clientX - rect.left,
-        y: touch ? touch.clientY - rect.top : (e as MouseEvent).clientY - rect.top,
+        x: touch
+          ? touch.clientX - rect.left
+          : (e as MouseEvent).clientX - rect.left,
+        y: touch
+          ? touch.clientY - rect.top
+          : (e as MouseEvent).clientY - rect.top,
       };
     };
 
@@ -101,11 +111,11 @@ export default function Doodle({ widgetId }: DoodleProps) {
   }, [isDrawing, color, isErasing, savedDrawing]);
 
   const saveDrawing = () => {
-      const canvas = canvasRef.current;
-      if (canvas) {
-          setSavedDrawing(canvas.toDataURL("image/png"));
-      }
-  }
+    const canvas = canvasRef.current;
+    if (canvas) {
+      setSavedDrawing(canvas.toDataURL("image/png"));
+    }
+  };
 
   const clearCanvas = () => {
     const canvas = canvasRef.current;
@@ -119,16 +129,32 @@ export default function Doodle({ widgetId }: DoodleProps) {
   return (
     <div className="w-full h-full flex flex-col">
       <div className="flex items-center gap-2 p-1 border-b">
-        <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="w-8 h-8"/>
-        <Button variant={isErasing ? "secondary" : "ghost"} size="icon" onClick={() => setIsErasing(!isErasing)}>
-          <Eraser className="h-4 w-4"/>
+        <input
+          type="color"
+          value={color}
+          onChange={(e) => setColor(e.target.value)}
+          className="w-8 h-8"
+        />
+        <Button
+          variant={isErasing ? "secondary" : "ghost"}
+          size="icon"
+          onClick={() => setIsErasing(!isErasing)}
+        >
+          <Eraser className="h-4 w-4" />
         </Button>
-        <Button variant="ghost" size="icon" onClick={clearCanvas}>
-          <Trash2 className="h-4 w-4"/>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={clearCanvas}
+        >
+          <Trash2 className="h-4 w-4" />
         </Button>
       </div>
       <div className="flex-grow relative">
-        <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full bg-white rounded-b-md" />
+        <canvas
+          ref={canvasRef}
+          className="absolute top-0 left-0 w-full h-full bg-white rounded-b-md"
+        />
       </div>
     </div>
   );

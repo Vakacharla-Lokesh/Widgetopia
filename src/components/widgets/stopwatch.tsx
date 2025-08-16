@@ -42,15 +42,29 @@ export default function Stopwatch() {
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center gap-4">
-      <div className="text-5xl font-mono font-semibold" suppressHydrationWarning>
+      <div
+        className="text-5xl font-mono font-semibold"
+        suppressHydrationWarning
+      >
         {formatTime(time)}
       </div>
       <div className="flex gap-2">
-        <Button onClick={handleStartStop} size="lg">
-          {isRunning ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
-          <span className="sr-only">{isRunning ? 'Pause' : 'Play'}</span>
+        <Button
+          onClick={handleStartStop}
+          size="lg"
+        >
+          {isRunning ? (
+            <Pause className="h-6 w-6" />
+          ) : (
+            <Play className="h-6 w-6" />
+          )}
+          <span className="sr-only">{isRunning ? "Pause" : "Play"}</span>
         </Button>
-        <Button onClick={handleReset} variant="outline" size="lg">
+        <Button
+          onClick={handleReset}
+          variant="outline"
+          size="lg"
+        >
           <RotateCcw className="h-6 w-6" />
           <span className="sr-only">Reset</span>
         </Button>

@@ -8,7 +8,10 @@ interface NotesProps {
 }
 
 export default function Notes({ widgetId }: NotesProps) {
-  const [note, setNote] = useLocalStorage(`notes-widget-${widgetId}`, "My new note...");
+  const [note, setNote] = useLocalStorage(
+    `notes-widget-${widgetId}`,
+    "My new note..."
+  );
 
   return (
     <div className="w-full h-full">

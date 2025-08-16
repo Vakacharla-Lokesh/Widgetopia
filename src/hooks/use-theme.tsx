@@ -31,11 +31,9 @@ type ThemeContextType = {
   setCustomColor: (colorName: keyof CustomColors, value: string) => void;
 };
 
-// Function to convert hex to HSL string
 const hexToHsl = (hex: string): string => {
-  let r = 0,
-    g = 0,
-    b = 0;
+  if (!hex) return "0 0% 0%";
+  let r = 0, g = 0, b = 0;
   if (hex.length === 4) {
     r = parseInt(hex[1] + hex[1], 16);
     g = parseInt(hex[2] + hex[2], 16);
@@ -46,39 +44,49 @@ const hexToHsl = (hex: string): string => {
     b = parseInt(hex.substring(5, 7), 16);
   }
 
-  r /= 255;
-  g /= 255;
-  b /= 255;
-
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  let h = 0,
-    s = 0,
-    l = (max + min) / 2;
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0, l = (max + min) / 2;
 
   if (max !== min) {
     const d = max - min;
     s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
     switch (max) {
-      case r:
-        h = (g - b) / d + (g < b ? 6 : 0);
-        break;
-      case g:
-        h = (b - r) / d + 2;
-        break;
-      case b:
-        h = (r - g) / d + 4;
-        break;
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
     }
     h /= 6;
   }
-
   h = Math.round(h * 360);
   s = Math.round(s * 100);
   l = Math.round(l * 100);
-
   return `${h} ${s}% ${l}%`;
 };
+
+const hslToHex = (hsl: string): string => {
+    const [h, s, l] = hsl.match(/\d+/g)!.map(Number);
+    const sDecimal = s / 100;
+    const lDecimal = l / 100;
+    const c = (1 - Math.abs(2 * lDecimal - 1)) * sDecimal;
+    const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+    const m = lDecimal - c / 2;
+    let r = 0, g = 0, b = 0;
+
+    if (h >= 0 && h < 60) { [r, g, b] = [c, x, 0]; }
+    else if (h >= 60 && h < 120) { [r, g, b] = [x, c, 0]; }
+    else if (h >= 120 && h < 180) { [r, g, b] = [0, c, x]; }
+    else if (h >= 180 && h < 240) { [r, g, b] = [0, x, c]; }
+    else if (h >= 240 && h < 300) { [r, g, b] = [x, 0, c]; }
+    else { [r, g, b] = [c, 0, x]; }
+
+    const toHex = (val: number) => {
+        const hex = Math.round((val + m) * 255).toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+    };
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
 
 const THEME_CONFIG: Record<string, Record<string, string>> = {
   default: {
@@ -119,52 +127,65 @@ const THEME_CONFIG: Record<string, Record<string, string>> = {
   },
 };
 
+const DEFAULT_CUSTOM_COLORS: CustomColors = {
+  background: "#faf7f5",
+  foreground: "#09090b",
+  primary: "#a7c5bd",
+  ring: "#b9c8c5",
+};
+
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setThemeState] = useLocalStorage<Theme>("dashboard-theme", {
     name: "default",
     backgroundUrl: "",
-    foreground: "#000000",
-    background: "#000000",
-    customColors: {
-      background: "#faf7f5",
-      foreground: "#09090b",
-      primary: "#a7c5bd",
-      ring: "#b9c8c5",
-    },
+    foreground: "#09090b",
+    background: "#faf7f5",
+    customColors: DEFAULT_CUSTOM_COLORS,
   });
 
   useEffect(() => {
     const root = document.documentElement;
-    if (theme.name === "custom") {
-      const isDark = ["stone", "orange", "rose", "violet", "green"].includes(
-        theme.name
-      );
-      root.classList.toggle("dark", isDark);
-
-      if (theme.customColors) {
-        Object.entries(theme.customColors).forEach(([name, value]) => {
-          if (value) {
-            root.style.setProperty(`--${name}`, hexToHsl(value));
-          }
-        });
-      }
-    } else {
-      const isDark = ["stone", "orange", "rose", "violet", "green"].includes(
-        theme.name
-      );
-      root.classList.toggle("dark", isDark);
-
-      const config = THEME_CONFIG[theme.name] || THEME_CONFIG.default;
-      for (const [key, value] of Object.entries(config)) {
-        root.style.setProperty(key, value);
-      }
+    
+    const applyTheme = (themeName: string, customColors?: Partial<CustomColors>) => {
+        if (themeName === 'custom' && customColors) {
+            Object.entries(customColors).forEach(([name, value]) => {
+                if (value) root.style.setProperty(`--${name}`, hexToHsl(value));
+            });
+        } else {
+            const config = THEME_CONFIG[themeName] || THEME_CONFIG.default;
+            Object.entries(config).forEach(([key, value]) => {
+                root.style.setProperty(key, value);
+            });
+        }
+        const isDark = ["stone", "orange", "rose", "violet", "green"].includes(themeName);
+        root.classList.toggle("dark", isDark);
     }
-  }, [theme]);
+    applyTheme(theme.name, theme.customColors);
 
+  }, [theme]);
+  
   const setTheme = (name: string) => {
-    setThemeState((prev) => ({ ...prev, name }));
+    if (name === 'custom') {
+        setThemeState((prev) => ({ ...prev, name }));
+    } else {
+        const config = THEME_CONFIG[name] || THEME_CONFIG.default;
+        const newCustomColors: Partial<CustomColors> = {
+            background: hslToHex(config['--background']),
+            foreground: hslToHex(config['--foreground']),
+            primary: hslToHex(config['--primary']),
+            ring: hslToHex(config['--ring']),
+        };
+        setThemeState((prev) => ({ 
+            ...prev,
+            name,
+            customColors: {
+                ...prev.customColors,
+                ...newCustomColors,
+            }
+        }));
+    }
   };
 
   const setBackgroundUrl = (url: string) => {
@@ -198,3 +219,5 @@ export const useTheme = () => {
   }
   return context;
 };
+
+    
